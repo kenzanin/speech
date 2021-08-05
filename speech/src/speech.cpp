@@ -235,8 +235,10 @@ int __PitchAnalyzer(const char *fileName) {
 extern "C" {
 #endif
 
-DLLEXPORT
-int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
+DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
+#ifdef _MSC_VER
+  __pragma(comment(linker, "/export:PitchAnalyzer=_PitchAnalyzer@8"));
+#endif
   auto err = __PitchAnalyzer(fileName);
   auto x = jsonResult.dump();
   x.copy(dst, x.length() + 1, 0);
@@ -245,6 +247,9 @@ int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
 
 DLLEXPORT
 char *ADDCALL PitchAnalyzer2(char const *fileName) {
+#ifdef _MSC_VER
+  __pragma(comment(linker, "/export:PitchAnalyzer2=_PitchAnalyzer2@4"));
+#endif
   __PitchAnalyzer(fileName);
   auto x = jsonResult.dump();
   char *json_return = new char[x.length() + 1]{};

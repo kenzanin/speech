@@ -6,6 +6,8 @@
     defined(__MINGW32__)
 #define DLLEXPORT __declspec(dllexport)
 #define ADDCALL __stdcall
+#ifdef _MSVC_VER
+#endif
 #else
 #define DLLEXPORT
 #define ADDCALL
@@ -18,11 +20,9 @@ typedef int errno_t;
 extern "C" {
 #endif
 
-DLLEXPORT
-int ADDCALL PitchAnalyzer(char* const, char* const);
+DLLEXPORT int ADDCALL PitchAnalyzer(char* const, char* const);
 
-DLLEXPORT
-char* ADDCALL PitchAnalyzer2(const char*);
+DLLEXPORT char* ADDCALL PitchAnalyzer2(const char*);
 
 #ifdef __cplusplus
 }

@@ -17,10 +17,6 @@ target_sources(main PRIVATE
   lagu.wav
   test.wav
   out/linux/libspeech.so
-  out/win64/libspeech.dll
-  out/win64/libc++.dll
-  out/win64/libunwind.dll
-  out/win32/libspeech.dll
-  out/win32/libc++.dll
-  out/win32/libunwind.dll
+  out/win64/speech.dll
+  out/win32/speech.dll
 )
