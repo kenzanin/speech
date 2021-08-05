@@ -17,6 +17,10 @@
 
 #if (defined(__WIN32__) || defined(_WIN32)) && !defined(__MINGW32__)
 #pragma warning(disable : 4996)
+#else
+#define fopen_s(pFile, filename, mode) \
+  ((*(pFile)) = fopen((filename), (mode))) == NULL
+typedef int errno_t;
 #endif
 
 namespace {
@@ -116,9 +120,10 @@ static int GetParameters(FILE *fp, int *fs, int *nbit, int *wav_length) {
 
 void wavwrite(const double *x, int x_length, int fs, int nbit,
               const char *filename) {
-  FILE *fp = fopen(filename, "wb");
-  if (NULL == fp) {
-    printf("File cannot be opened.\n");
+  FILE *fp{};
+  int err = fopen_s(&fp, filename, "wb");
+  if (err) {
+    printf("file cannot be oppened.\n");
     return;
   }
 
@@ -172,8 +177,10 @@ void wavwrite(const double *x, int x_length, int fs, int nbit,
 }
 
 int GetAudioLength(const char *filename) {
-  FILE *fp = fopen(filename, "rb");
-  if (NULL == fp) {
+  FILE *fp{};
+  errno_t err{};
+  err = fopen_s(&fp, filename, "rb");
+  if (err) {
     return 0;
   }
 
@@ -222,8 +229,10 @@ int GetAudioLength(const char *filename) {
 }
 
 void wavread(const char *filename, int *fs, int *nbit, double *x) {
-  FILE *fp = fopen(filename, "rb");
-  if (NULL == fp) {
+  FILE *fp{};
+  errno_t err{};
+  err = fopen_s(&fp, filename, "rb");
+  if (err) {
     printf("File not found.\n");
     return;
   }

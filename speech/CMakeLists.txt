@@ -7,15 +7,19 @@ project(speech LANGUAGES CXX VERSION 1.0 DESCRIPTION "speech library")
 add_subdirectory(world)
 
 add_library(speech SHARED
-  src/parameterio.cpp
+  #src/parameterio.cpp
   src/audioio.cpp
   src/speech.cpp
   include/speech.hpp
   include/jsonString.hpp
   include/audioio.h
-  include/parameterio.h
+  #include/parameterio.h
   )
 target_include_directories(speech PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_include_directories(speech PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/world/src)
-target_link_libraries(speech world world_tool pthread)
-
+if (MSVC OR WIN32)
+  target_link_libraries(speech world)
+endif(MSVC)
+if (UNIX)
+  target_link_libraries(speech world pthread)
+endif (UNIX)

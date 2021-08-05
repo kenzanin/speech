@@ -9,6 +9,9 @@
 #else
 #define DLLEXPORT
 #define ADDCALL
+#define fopen_s(pFile, filename, mode) \
+  ((*(pFile)) = fopen((filename), (mode))) == NULL
+typedef int errno_t;
 #endif
 
 #ifdef __cplusplus

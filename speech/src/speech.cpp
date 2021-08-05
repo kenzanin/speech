@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdio>
 #include <cstring>
 #include <future>
 #include <iostream>
@@ -17,6 +18,8 @@
 #include "world/dio.h"
 #include "world/harvest.h"
 #include "world/stonemask.h"
+
+#define __HARVEST__ 1
 
 static const std::map<int, std::string> errCode{
     {0000, "success"},
@@ -45,9 +48,8 @@ struct _wavFile {
         throw 1002;
       }
     } catch (int e) {
-      auto x = jsonResult.at("examples").at(0);
-      x.at("status") = 1002;
-      x.at("comment") = errCode.at(1002);
+      jsonResult.at("status") = e;
+      jsonResult.at("comment") = errCode.at(1002);
       std::cerr << 1002 << " " << errCode.at(1002) << "\n";
       throw;
     }
@@ -56,9 +58,9 @@ struct _wavFile {
       buf = new const double[length]{};
     } catch (std::bad_alloc &e) {
       std::cerr << 3000 << " " << errCode.at(3000) << " " << e.what() << "\n";
-      auto x = jsonResult.at("examples").at(0);
-      x.at("status") = 3000;
-      x.at("comment") = errCode.at(3000) + e.what();
+
+      jsonResult.at("status") = 3000;
+      jsonResult.at("comment") = errCode.at(3000) + e.what();
       throw 3000;
     }
     wavread(fileName, &fs, &nbit, const_cast<double *>(buf));
@@ -79,9 +81,9 @@ struct _f0 {
       temporalPossition = new double[numOfFrame]{};
     } catch (std::bad_alloc &e) {
       std::cerr << 3000 << " " << errCode.at(3000) << " " << e.what() << "\n";
-      auto x = jsonResult.at("examples").at(0);
-      x.at("status") = 3000;
-      x.at("comment") = errCode.at(3000) + e.what();
+
+      jsonResult.at("status") = 3000;
+      jsonResult.at("comment") = errCode.at(3000) + e.what();
       throw 3000;
     }
   }
@@ -148,15 +150,20 @@ double getPitch4(const double *dat, int const dat_length) {
 }
 
 int __PitchAnalyzer(const char *fileName) {
-  if (std::FILE *file = std::fopen(fileName, "r")) {
+  {
+    std::FILE *file;
+    try {
+      errno_t err = fopen_s(&file, fileName, "r");
+      if (err) throw 1000;
+    } catch (int e) {
+      std::cerr << errCode.at(e) << "\n";
+      jsonResult.at("status") = e;
+      jsonResult.at("comment") = errCode.at(e);
+      return 1000;
+    }
     std::fclose(file);
-  } else {
-    std::cerr << errCode.at(1000) << "\n";
-    auto &x = jsonResult.at("examples").at(0);
-    x.at("status") = 1000;
-    x.at("comment") = errCode.at(1000);
-    return 1000;
   }
+
   _wavFile *wav{};
   try {
     wav = new _wavFile(fileName);
@@ -164,28 +171,60 @@ int __PitchAnalyzer(const char *fileName) {
     return e;
   }
 
+#if __DEBUG__ == 1
+  std::printf("\n\nSTART: list dari buf wav\n\n");
+  for (int i = 0; i < wav->length; i++) {
+    std::printf(" %.2f ", wav->buf[i]);
+  }
+  std::printf("\n\nEND: list dari buf wav\n\n");
+#endif
+
+#if __HARVEST__ == 1
+  HarvestOption option{};
+  InitializeHarvestOption(&option);
+#else
   DioOption option{};
   InitializeDioOption(&option);
+#endif
 
-  // F0 analysis
   _f0 *f0{};
   try {
+#if __HARVEST__ == 1
+    f0 = new _f0(
+        GetSamplesForHarvest(wav->fs, wav->length, option.frame_period));
+#else
     f0 = new _f0(GetSamplesForDIO(wav->fs, wav->length, option.frame_period));
+#endif
   } catch (int e) {
     delete f0;
     return e;
   }
 
+#if __HARVEST__ == 1
+  Harvest(wav->buf, wav->length, wav->fs, &option, f0->temporalPossition,
+          f0->f0);
+#else
   Dio(wav->buf, wav->length, wav->fs, &option, f0->temporalPossition, f0->f0);
+#endif
+
+#if __DEBUG__ == 1
+  std::printf("\n\nSTART: list dari F0:\n\n");
+  for (int i = 0; i < f0->numOfFrame; i++) {
+    std::printf(" %.2f ", f0->f0[i]);
+  }
+  std::printf("\n\nEND: list dari F0:\n\n");
+#endif
+
   std::future<double> ret1 = std::async(&getPitch1, f0->f0, f0->numOfFrame);
   std::future<double> ret2 = std::async(&getPitch2, f0->f0, f0->numOfFrame);
   std::future<double> ret3 = std::async(&getPitch3, f0->f0, f0->numOfFrame);
   std::future<double> ret4 = std::async(&getPitch4, f0->f0, f0->numOfFrame);
 
-  jsonResult.at("examples").at(0).at("pitch1") = ret1.get();
-  jsonResult.at("examples").at(0).at("pitch2") = ret2.get();
-  jsonResult.at("examples").at(0).at("pitch3") = ret3.get();
-  jsonResult.at("examples").at(0).at("pitch4") = ret4.get();
+  jsonResult.at("pitch1") = ret1.get();
+  jsonResult.at("pitch2") = ret2.get();
+  jsonResult.at("pitch3") = ret3.get();
+  jsonResult.at("pitch4") = ret4.get();
+  jsonResult.at("comment") = errCode.at(0);
 
   delete f0;
   delete wav;
@@ -200,16 +239,16 @@ DLLEXPORT
 int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
   auto err = __PitchAnalyzer(fileName);
   auto x = jsonResult.dump();
-  x.copy(dst, x.length() - 1, 0);
+  x.copy(dst, x.length() + 1, 0);
   return err == 0 ? 0 : err;
 }
 
 DLLEXPORT
 char *ADDCALL PitchAnalyzer2(char const *fileName) {
   __PitchAnalyzer(fileName);
-  char *json_return = new char[jsonResult.dump().length()]{};
   auto x = jsonResult.dump();
-  x.copy(json_return, x.length() - 1, 0);
+  char *json_return = new char[x.length() + 1]{};
+  x.copy(json_return, x.length(), 0);
   return json_return;
 }
 

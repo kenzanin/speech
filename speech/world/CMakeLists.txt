@@ -101,3 +101,10 @@ install(EXPORT world-export
         )
 export(TARGETS world world_tool NAMESPACE world::
         FILE ${PROJECT_BINARY_DIR}/world-targets.cmake)
+
+if(MSVC OR WIN32)
+  add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+  foreach (lib world world_tool)
+    #target_compile_options(${lib} PUBLIC /W1)
+  endforeach(lib world world_tool)
+endif(MSVC)
