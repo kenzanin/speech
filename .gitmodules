@@ -1,0 +1,3 @@
+[submodule "speech/world"]
+	path = speech/world
+	url = https://github.com/mmorise/World
