@@ -8,6 +8,13 @@
 // we recommend more suitable functions provided by other organizations.
 // This file is independent of WORLD project and for the test.cpp.
 //-----------------------------------------------------------------------------
+
+/*
+Edited by Suka Isnaini on 9th of August 2021
+Created for PT Sejahtera Empati Pratama
+All Copyrights belong to PT Sejahtera Empati Pratama
+*/
+
 #include "./audioio.h"
 
 #include <math.h>

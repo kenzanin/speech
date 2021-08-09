@@ -1,3 +1,9 @@
+/*
+Authored by Suka Isnaini on 9th of August 2021
+Created for PT Sejahtera Empati Pratama
+All Copyrights belong to PT Sejahtera Empati Pratama
+*/
+
 #include <string>
 #ifndef SPEECH_HPP
 #define SPEECH_HPP

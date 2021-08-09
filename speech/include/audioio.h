@@ -3,6 +3,7 @@
 // Author: mmorise [at] meiji.ac.jp (Masanori Morise)
 // Last update: 2021/02/15
 //-----------------------------------------------------------------------------
+
 #ifndef WORLD_AUDIOIO_H_
 #define WORLD_AUDIOIO_H_
 
@@ -23,7 +24,7 @@ extern "C" {
 //   This function only supports the 16 bit.
 //-----------------------------------------------------------------------------
 void wavwrite(const double *x, int x_length, int fs, int nbit,
-  const char *filename);
+              const char *filename);
 
 //-----------------------------------------------------------------------------
 // GetAudioLength() returns the length of .wav file.
@@ -44,7 +45,7 @@ int GetAudioLength(const char *filename);
 //   nbit         : Quantization bit [bit]
 //   x            : The output waveform.
 //-----------------------------------------------------------------------------
-void wavread(const char* filename, int *fs, int *nbit, double *x);
+void wavread(const char *filename, int *fs, int *nbit, double *x);
 
 #ifdef __cplusplus
 }

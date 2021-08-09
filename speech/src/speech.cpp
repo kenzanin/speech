@@ -1,3 +1,9 @@
+/*
+Authored by Suka Isnaini on 9th of August 2021
+Created for PT Sejahtera Empati Pratama
+All Copyrights belong to PT Sejahtera Empati Pratama
+*/
+
 #include "speech.hpp"
 
 #include <algorithm>
@@ -236,7 +242,7 @@ extern "C" {
 #endif
 
 DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
   __pragma(comment(linker, "/export:PitchAnalyzer=_PitchAnalyzer@8"));
 #endif
   auto err = __PitchAnalyzer(fileName);
@@ -247,7 +253,7 @@ DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
 
 DLLEXPORT
 char *ADDCALL PitchAnalyzer2(char const *fileName) {
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
   __pragma(comment(linker, "/export:PitchAnalyzer2=_PitchAnalyzer2@4"));
 #endif
   __PitchAnalyzer(fileName);
