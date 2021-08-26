@@ -1,4 +1,9 @@
 /*
+ * @file speech.cpp
+ * @author suka isnaini (kenzanin)
+ * @date 26-08-21
+ * @brief code for getting f0 from libworld (high quality speech analysis)
+ *
 Authored by Suka Isnaini on 9th of August 2021
 Created for PT Sejahtera Empati Pratama
 All Copyrights belong to PT Sejahtera Empati Pratama
@@ -27,6 +32,10 @@ All Copyrights belong to PT Sejahtera Empati Pratama
 
 #define __HARVEST__ 1
 
+/*
+ * @brief error definition
+ *
+ */
 static const std::map<int, std::string> errCode{
     {0000, "success"},
     {1000, "Error : file not found"},
@@ -38,6 +47,17 @@ static const std::map<int, std::string> errCode{
     {2003, "Error : cannot calculate pitch 3. Reason : ..."},
     {2004, "Error : cannot calculate pitch 4. Reason : ..."},
     {3000, "Error : Memory Allocation Error"}};
+
+/*
+ * @brief _wavFile struct
+ * @detail this struct hold wav related data such as
+ * - fileName == wav filename in c string
+ * - fs == needed by worldlib
+ * - nbit == needed by worldlib
+ * - length == needed by worldlib
+ * default constructor with parameter wav file location and file name in c
+ * string.
+ */
 
 struct _wavFile {
  public:
@@ -77,6 +97,14 @@ struct _wavFile {
   //_wavFile operator=(_wavFile const &other) { return *this; }
 };
 
+/*
+ * @brief _f0 struct
+ * @detail
+ * this struct provide space to hold f0 data, generate by worldlib such as
+ * - f0 array of double
+ * - temporalPossition array of double
+ * default constructor with parameter the size of array in int
+ */
 struct _f0 {
   double *f0{};
   double *temporalPossition{};
@@ -103,26 +131,46 @@ struct _f0 {
   //_f0 operator=(const _f0 &other) { return *this; }
 };
 
-double getPitch1(const double *dat, int const dat_lenght) {
+/*
+ * @brief getPitch1
+ * @param f0 data array
+ * @param dat_length f0 array length
+ * @return average value for f0
+ */
+double getPitch1(const double *dat, int const dat_length) {
   double sum{};
-  for (int i = 0; i < dat_lenght; i++) {
+  for (int i = 0; i < dat_length; i++) {
     if (dat[i] == 0.0) continue;
     sum += dat[i];
   }
-  return (double)sum / dat_lenght;
+  return (double)sum / dat_length;
 }
 
-double getPitch2(const double *dat, int const dat_lenght) {
+/*
+ * @brief getPitch2
+ * @param f0 data array
+ * @param dat_length f0 array length
+ * @return standard deviation of f0
+ */
+
+double getPitch2(const double *dat, int const dat_length) {
   double sum{};
-  std::for_each(dat, dat + dat_lenght, [&sum](double each) { sum += each; });
-  double mean = (double)sum / dat_lenght;
+  std::for_each(dat, dat + dat_length, [&sum](double each) { sum += each; });
+  double mean = (double)sum / dat_length;
   double sd{};
-  std::for_each(dat, dat + dat_lenght,
+  std::for_each(dat, dat + dat_length,
                 [mean, &sd](double each) { sd += std::pow(each - mean, 2); });
 
-  return std::sqrt(sd / dat_lenght);
+  return std::sqrt(sd / dat_length);
 }
 
+/*
+ * @brief getPitch3
+ * @param f0 data array
+ * @param dat_length f0 array length
+ * @return (average of first half of f0 data) - (average of last half of f0
+ * data)
+ */
 double getPitch3(const double *dat, int const dat_length) {
   double sum1{};
   for (int i = 0; i < dat_length / 2; i++) {
@@ -139,6 +187,12 @@ double getPitch3(const double *dat, int const dat_length) {
   return sum2 - sum1;
 }
 
+/*
+ * @brief getPitch4
+ * @param f0 data array
+ * @param dat_length f0 array length
+ * @return (the average of f0[0 .. max-5]) - (the average of f0[max-5 .. max])
+ */
 double getPitch4(const double *dat, int const dat_length) {
   double sum1{};
   for (int i = 0; i < dat_length - 5; i++) {
@@ -241,6 +295,13 @@ int __PitchAnalyzer(const char *fileName) {
 extern "C" {
 #endif
 
+/*
+ * @brief PitchAnalyzer
+ * @param fileName == wav file name in c string
+ * @param dst == pointer of string to store the c string result, the caller need
+ * to allocated this first and then free it.
+ * @return 0 == succes, non zero err in error
+ */
 DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
 #if defined(_MSC_VER) && !defined(__clang__)
   __pragma(comment(linker, "/export:PitchAnalyzer=_PitchAnalyzer@8"));
@@ -251,8 +312,12 @@ DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
   return err == 0 ? 0 : err;
 }
 
-DLLEXPORT
-char *ADDCALL PitchAnalyzer2(char const *fileName) {
+/*
+ * @brief PitchAnalyzer2
+ * @param fileName == wav file name in c string
+ * @return pointer of c string result.
+ */
+DLLEXPORT char *ADDCALL PitchAnalyzer2(char const *fileName) {
 #if defined(_MSC_VER) && !defined(__clang__)
   __pragma(comment(linker, "/export:PitchAnalyzer2=_PitchAnalyzer2@4"));
 #endif
