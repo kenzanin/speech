@@ -30,6 +30,12 @@ All Copyrights belong to PT Sejahtera Empati Pratama
 #include "world/harvest.h"
 #include "world/stonemask.h"
 
+/*
+ * @brief this macro controll f0 capture method 1 for harvest and 0 for dio,
+ * more detail about harvest or dio can be found in the world doc
+ * @param 1 == harvest
+ * @param 0 == dio
+ */
 #define __HARVEST__ 1
 
 /*
@@ -168,8 +174,8 @@ double getPitch2(const double *dat, int const dat_length) {
  * @brief getPitch3
  * @param f0 data array
  * @param dat_length f0 array length
- * @return (average of first half of f0 data) - (average of last half of f0
- * data)
+ * @return result form average of first half of f0 data minus average of last
+ * half of f0 data
  */
 double getPitch3(const double *dat, int const dat_length) {
   double sum1{};
@@ -191,7 +197,8 @@ double getPitch3(const double *dat, int const dat_length) {
  * @brief getPitch4
  * @param f0 data array
  * @param dat_length f0 array length
- * @return (the average of f0[0 .. max-5]) - (the average of f0[max-5 .. max])
+ * @return result from the average of f0 from index 0 to max-5 minus the average
+ * of f0 index 5 to max
  */
 double getPitch4(const double *dat, int const dat_length) {
   double sum1{};
@@ -208,6 +215,13 @@ double getPitch4(const double *dat, int const dat_length) {
 
   return sum2 - sum1;
 }
+
+/* @brief the main function of this module
+ * @param filename == wav file path in c string type
+ * @return 0
+ * @detail this function feed the necessary data extracted from wav file to lib
+ * world to get the f0 data and to be processed by getPitch1,2,3,4.
+ */
 
 int __PitchAnalyzer(const char *fileName) {
   {
@@ -274,12 +288,13 @@ int __PitchAnalyzer(const char *fileName) {
   }
   std::printf("\n\nEND: list dari F0:\n\n");
 #endif
-
+  //! start getPitch1,2,3,4 asnyc or threaded
   std::future<double> ret1 = std::async(&getPitch1, f0->f0, f0->numOfFrame);
   std::future<double> ret2 = std::async(&getPitch2, f0->f0, f0->numOfFrame);
   std::future<double> ret3 = std::async(&getPitch3, f0->f0, f0->numOfFrame);
   std::future<double> ret4 = std::async(&getPitch4, f0->f0, f0->numOfFrame);
 
+  //! wait until async process finish and return the result
   jsonResult.at("pitch1") = ret1.get();
   jsonResult.at("pitch2") = ret2.get();
   jsonResult.at("pitch3") = ret3.get();
@@ -303,6 +318,7 @@ extern "C" {
  * @return 0 == succes, non zero err in error
  */
 DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
+//! macro to remove function decoration in the library if using msvc compiler
 #if defined(_MSC_VER) && !defined(__clang__)
   __pragma(comment(linker, "/export:PitchAnalyzer=_PitchAnalyzer@8"));
 #endif
@@ -318,6 +334,7 @@ DLLEXPORT int ADDCALL PitchAnalyzer(char *const fileName, char *const dst) {
  * @return pointer of c string result.
  */
 DLLEXPORT char *ADDCALL PitchAnalyzer2(char const *fileName) {
+//! macro to remove function decoration in the library if using msvc compiler
 #if defined(_MSC_VER) && !defined(__clang__)
   __pragma(comment(linker, "/export:PitchAnalyzer2=_PitchAnalyzer2@4"));
 #endif
